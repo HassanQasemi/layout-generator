@@ -1,42 +1,58 @@
 import React , {FC, useEffect, useState} from "react";
-import { sizes } from "../enum/sizes";
 import { sizeData, sizeType } from "../static/sizeData";
+import SizeBadge from "./size-badge";
 
-interface inputValueType extends sizeType{
+export interface inputValueType extends sizeType{
     count:number
 }
-const CustomInput : FC =()=>{
-    const [value , setValue] = useState<inputValueType[]>([{count : 1 , ...sizeData[0]}])
+interface inputPropsType {
+    getSizes: (value: inputValueType[]) => void
+}
+const CustomInput : FC<inputPropsType> =({getSizes})=>{
+    const [value , setValue] = useState<inputValueType[]>([])
     const [showDropdown,setShowDropdown] = useState<boolean>(false)
 
     const handleClickInput =()=>{
         setShowDropdown(!showDropdown)
 
     }
-    const selectSizeHandler=(item:sizeType)=>{
-          setValue([{ count: 2 , ...item}])
+    useEffect(() => {
+        getSizes(value)
+    }, [value, getSizes]) 
+    const selectSizeHandler = (item: sizeType) => {
+        const isExist = value?.find(j => j.id === item.id)
+
+        if (isExist) {
+            setValue([...value.map(j => j.id === isExist.id ? {...j, count: j.count + 1} : j)])
+            
+        } else {
+            setValue([...value, { count: 1, ...item }])
+        }
     }
-    useEffect(()=>{
-        console.log(value)
-    },[value])
+    
  return(
      <>
-        <div 
-            className="border border-gray-300 rounded-lg h-48 bg-white cursor-pointer"
-            onClick={handleClickInput}>
-            {value?.length || "please select size of grid..."}
-        </div>
-        <div className="border rounded-lg w-full p-3">
+        <div onClick={handleClickInput}
+            className="border border-gray-300 mt-5 rounded-lg h-12 bg-white w-96 mx-auto px-3 flex items-center cursor-text transition-all ease-out focus:border-blue-700">
+                {value?.length ? <>
+                    {value.map(item => {
+                        return <SizeBadge key={item.id} {...item} />
+                    })}
+                </> : <p className="italic text-sm text-gray-600">please select size(s)</p> }
+            </div>
+       {
+           showDropdown  ?  <ul className="border rounded-lg w-96 mx-auto p-3">
             {sizeData.map(item => {
                 return <li 
                           onClick={()=> selectSizeHandler(item)}
                           key={item.id}
-                          className="cursor-pointer py-2 pr-2 hover:bg-gray-400 text-gray-900">
+                          className="cursor-pointer py-2 pr-2 hover:bg-gray-400 text-gray-900 flex justify-center">
                           {item.text}
                         </li>
             })}
 
-        </div>
+        </ul> : null
+       }
      </>
  )
 }
